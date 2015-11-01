@@ -1,0 +1,88 @@
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>TouchScale : Weigh things on your iPhone!</title>
+	<style>}
+		#container {
+			width: 500px;
+			margin: 0 auto;
+		}
+		#circle {
+			width: 400px;
+			height: 400px;
+			border-radius: 50%;
+			border: 3px dashed #ccc;
+			margin: 50px auto;
+		}
+		#weight {
+			width: 400px;
+			height: 100px;
+			margin: 30px auto;
+			color: #111;
+			font-family: 'Helvetica Neue', sans-serif;
+			text-align: center;
+			line-height: 100px;
+			font-size: 32px;
+		}
+		#tare {
+			width: 400px;
+			height: 75px;
+			background: lightblue;
+			position: absolute;
+			bottom: 50px;
+			left: 0px;
+			right: 0px;
+			margin: auto;
+			line-height: 75px;
+			text-align: center;
+			color: white;
+			font-family: 'Helvetica Neue', sans-serif;
+			font-size: 18px;
+			font-weight: bold;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="container">
+		<div id="circle"></div>
+		<div id="weight">0.00g</di>
+		<div id="tare">TARE</div>
+	</div>
+</body>
+
+<script>
+
+	var weight = document.getElementById('weight');
+	var maxForce = 6.666666667;
+	var currentTouch;
+	var updater = 0;
+
+	function onForceChanged(event) {
+		event.preventDefault();
+		currentTouch = event.touches[0]
+	}	
+
+	function onForceEnded(event) {
+		event.preventDefault();
+		currentTouch = undefined;
+		weight.innerHTML = '0.00g';
+	}
+
+	function updateForce() {
+
+		if(typeof currentTouch == 'undefined')
+			return
+
+		weight.innerHTML  = ((currentTouch.force * maxForce) / 0.020833) + 'g';
+	}
+
+	setInterval(updateForce, 1)
+
+	var circle = document.getElementById('circle')
+
+	circle.addEventListener('touchmove', onForceChanged, false)	
+	circle.addEventListener('touchstart', onForceChanged, false)	
+	circle.addEventListener('touchend', onForceEnded, false)	
+</script>
+</html>
