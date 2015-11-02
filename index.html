@@ -14,6 +14,20 @@
 			border-radius: 50%;
 			border: 3px dashed #ccc;
 			margin: 0px auto;
+			color: #111;
+			font-family: 'Helvetica Neue', sans-serif;
+			text-align: center;
+			-webkit-user-select: none;
+			position: relative;
+		}
+		#circle2 {
+			width: 0px;
+			height: 0px;
+			position: absolute;
+			background: rgb(100, 230, 100);
+			top: 0; left: 0; right: 0; bottom: 0;
+			margin: auto;
+			border-radius: 50%;
 		}
 		#weight {
 			width: 400px;
@@ -38,14 +52,27 @@
 			font-size: 18px;
 			font-weight: bold;
 		}
+		#info {
+			width: 400px;
+			height: 20px;
+			font-size: 10px;
+			margin-top: 10px;	
+			font-family: 'Helvetica Neue', sans-serif;
+			text-align: center;
+		}
+		span {
+			color: #777;
+		}
 	</style>
 </head>
 
 <body>
 	<div id="container">
-		<div id="circle"></div>
+		<div id="circle">Place something capacitive, like an apple. <br><b>Don't use anything that can scratch your iPhone.</b><br><span>(Only on iPhone 6S)</span> <div id="circle2"></div></div>
 		<div id="weight">0.00g</div>
 		<div id="tare">TARE</div>
+
+		<div id="info"><a href="http://ashertrockman.github.io/ios/2015/10/24/3d-touch-scale.html">How does this work?</a></div>
 	</div>
 </body>
 
@@ -53,6 +80,7 @@
 
 	var weight = document.getElementById('weight');
 	var tare = document.getElementById('tare');
+	var circle2 = document.getElementById('circle2');
 	var maxForce = 6.666666667;
 	var tareForce = 0;
 	var currentTouch;
@@ -82,6 +110,9 @@
 		else
 			force = currentTouch.force
 
+
+		circle2.style.height = ((force) * 390) + 'px';
+		circle2.style.width = ((force) * 390) + 'px';
 		weight.innerHTML  = (((force - tareForce) * maxForce) / 0.020833).toFixed(2) + 'g';
 	}
 
