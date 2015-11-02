@@ -1,12 +1,12 @@
 <html lang="en">
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 	<title>TouchScale : Weigh things on your iPhone!</title>
 	<style>
 		#container {
 			width: 400px;
-			min-height: 100%;
 			margin: 0px auto;
+			position: relative;
 		}
 		#circle {
 			width: 400px;
@@ -63,13 +63,30 @@
 		span {
 			color: #777;
 		}
+		form {
+			position: absolute;
+			left: 5px;
+			bottom: 60px;
+			font-size: 18px;
+		}
+		form > label {
+			font-size: 12px;
+		}
 	</style>
 </head>
 
 <body>
 	<div id="container">
-		<div id="circle">Place something capacitive, like an apple. <br><b>Don't use anything that can scratch your iPhone.</b><br><span>(Only on iPhone 6S)</span> <div id="circle2"></div></div>
+		<div id="circle">Place something capacitive, like an apple. <br><b>Don't use anything that can scratch your iPhone.</b><br><span>If changed, choose 3D Touch sensitivity.</span><div id="circle2"></div></div>
 		<div id="weight">0.00g</div>
+		<form>
+		<label for="senes">Sensitivity</label>
+		<select id="sense">
+			<option value="0">Light</option>
+			<option value="1" selected>Medium</option>
+			<option value="2">Firm</option>
+		</select>
+		</form>
 		<div id="tare">TARE</div>
 
 		<div id="info"><a href="http://ashertrockman.github.io/ios/2015/10/24/3d-touch-scale.html">How does this work?</a></div>
@@ -79,6 +96,8 @@
 <script>
 
 	var weight = document.getElementById('weight');
+	var forceConversions = [0.020833333, 0.0166666, 0.0138888883369941];
+	var fcIndex = 1;
 	var tare = document.getElementById('tare');
 	var circle2 = document.getElementById('circle2');
 	var maxForce = 6.666666667;
@@ -86,6 +105,10 @@
 	var currentTouch;
 	var updater = 0;
 
+
+	document.getElementById('sense').onchange = function(e) {
+		fcIndex = this.selectedIndex;
+	}
 
 	function onForceStart(event) {
 		currentTouch = event.touches[0]
@@ -113,7 +136,7 @@
 
 		circle2.style.height = ((force) * 390) + 'px';
 		circle2.style.width = ((force) * 390) + 'px';
-		weight.innerHTML  = (((force - tareForce) * maxForce) / 0.020833).toFixed(2) + 'g';
+		weight.innerHTML  = (((force - tareForce) * maxForce) / forceConversions[fcIndex]).toFixed(2) + 'g';
 	}
 
 	setInterval(updateForce, 1)
