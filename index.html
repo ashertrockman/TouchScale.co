@@ -1,6 +1,14 @@
 <html lang="en">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-85352784-1', 'auto');
+        ga('send', 'pageview');
+    </script>
     <title>TouchScale : Weigh things on your iPhone!</title>    
     <style>
         * {
@@ -155,8 +163,7 @@
     <div id="container">
 
 	<div style="position: absolute; z-index: 100; top: 5px; right: 5px;">
-		<a href="https://twitter.com/share" class="twitter-share-button" data-via="touchscale">Tweet</a>
-		<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+		<a href="https://twitter.com/share" class="twitter-share-button" data-url="http://www.touchscale.co" data-text="TouchScale - Weigh things in Safari on iPhone 6S!">Tweet</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
 	</div>
  
 	<div style="position: absolute; z-index: 100; top: -18px; left: 2px; font-size: 12px; height: 15px; width: 150px;">
@@ -173,7 +180,7 @@
                 If you have changed your 3D Touch sensitivity, set it below.
            </div>
 	    <div id="circle2"></div> 
-	    <div id="warning">Place on side for best result<br>(so it registers as one touch)</div>
+	    <div id="warning">Multi-Touch Weighing<br>(usually less accurate)</div>
         </div>
         <div id="footer">
             <div id="weight">
@@ -216,7 +223,7 @@
 	tare.addEventListener('touchstart', tareTouchStart, false)
 
 	var weight = document.getElementById('weight');
-	var forceConversions = [0.020833333, 0.0166666, 0.0138888883369941];
+	var forceConversions = [0.8, 1, 1.2];
 	var fcIndex = 1;
 	var tare = document.getElementById('tare');
 	var circle2 = document.getElementById('circle2');
@@ -225,10 +232,17 @@
 	var currentTouch;
 	var updater = 0;
 	var numTouches = 0;
+	var touches = {};
+	var force = 0;
 
 	document.getElementById('sense').onchange = function(e) {
 		fcIndex = this.selectedIndex;
+		document.cookie = "fc=" + fcIndex;
 	}
+
+	var fcCookie = ('; '+document.cookie).split('; fc=').pop().split(';').shift();
+	fcIndex = fcCookie == "" ? fcIndex : +fcCookie;
+	document.getElementById('sense').selectedIndex = fcIndex;
 
 	function onForceStart(event) {
 		currentTouch = event.touches[0]
@@ -243,34 +257,54 @@
 
 	function onForceEnded(event) {
 		event.preventDefault();
-		currentTouch = undefined;
+		setTimeout(function() {
+			currentTouch = undefined;
+			force = 0
+			delete touches[event.changedTouches[0].identifier];
+		}, 2);
 		numTouches = event.touches.length
 	}
 
+	function onForceChange(event) {
+		event.preventDefault();
+		currentTouch = event.changedTouches[0]
+		force = 0
+		for(var i = 0; i < event.changedTouches.length; i++)
+			touches[event.changedTouches[i].identifier] = event.changedTouches[i].force
+		numTouches = Object.keys(touches).length;
+		
+		for(var k in touches)
+			if(touches.hasOwnProperty(k)) {
+				force += touches[k]
+			}
+	}
+
+
+	function weigh(force) {
+
+		var tare = force - tareForce;
+		var grams = (tare * 405.257 * forceConversions[fcIndex] + 2.056 * forceConversions[fcIndex]);
+		if(grams < 12)
+			grams -= 2.056 * forceConversions[fcIndex];
+		return grams.toFixed(2);
+	};
+
+
 	function updateForce() {
-
-		var force = 0;
-
 		if(numTouches > 1) {
 			warning.style.display = 'inline-block';
 		} else {
 			warning.style.display = 'none';
 		}
 
-		if(typeof currentTouch == 'undefined')
-			force = 0
-		else
-			force = currentTouch.force
-
-
-		circle2.style.height = ((force) * 345) + 'px';
-		circle2.style.width = ((force) * 345) + 'px';
-		document.getElementById('container').style.webkitTransform = 'rotateX(' + force * -20 + 'deg) scale(' + (1 - (force * 0.06))  + ')';
-		var px = force * 5 + 'px';
+		circle2.style.height = ((force / numTouches) * 345) + 'px';
+		circle2.style.width = ((force / numTouches) * 345) + 'px';
+		document.getElementById('container').style.webkitTransform = 'rotateX(' + force / numTouches * -20 + 'deg) scale(' + (1 - (force / numTouches * 0.06))  + ')';
+		var px = force / numTouches * 5 + 'px';
 
 		if(force > 0)
 			document.body.style.boxShadow = '0px 0px ' + ' 15px ' + px + ' rgba(0, 0, 0, 0.333) inset';
-		weight.innerHTML  = (((force - tareForce) * maxForce) / forceConversions[fcIndex]).toFixed(2) + 'g';
+		weight.innerHTML  = weigh(force) + 'g';
 	}
 
 	setInterval(updateForce, 1)
@@ -280,6 +314,8 @@
 	circle.addEventListener('touchmove', onForceMove, false)	
 	circle.addEventListener('touchstart', onForceStart, false)	
 	circle.addEventListener('touchend', onForceEnded, false)
+
+	circle.addEventListener('touchforcechange', onForceChange, false);
 
 	    </script>
 </body>
